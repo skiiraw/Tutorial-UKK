@@ -1,0 +1,99 @@
+Cara Menghubungkan Internet ke MikroTik (Mode Station / WiFi Client)
+
+1. Login ke MikroTik
+- Buka Winbox.
+- Tunggu hingga router muncul pada daftar.
+- Login menggunakan MAC Address (disarankan saat awal konfigurasi).
+
+--------------------------------------------------
+
+2. Konfigurasi Wireless (Sebagai Client)
+
+Interfaces
+- Masuk ke Wireless → Interfaces.
+- Klik wlan1.
+- Atur konfigurasi berikut:
+  Mode : station  
+  Band : sesuaikan dengan WiFi tujuan (contoh: 2GHz-B/G/N)
+- Klik Scan → Start.
+- Pilih jaringan WiFi yang ingin digunakan → Connect.
+
+Security Profiles
+- Masuk ke tab Security Profiles.
+- Klik + untuk menambahkan profile baru (atau edit default).
+- Atur:
+  Mode : dynamic keys  
+  Authentication Types : WPA2-PSK (disarankan)  
+  Unicast Ciphers : aes-ccm  
+  Group Ciphers : aes-ccm  
+  WPA2 Pre-Shared Key : isi dengan password WiFi
+- Klik Apply → OK.
+- Kembali ke wlan1, lalu pilih security profile yang sudah dibuat.
+- Klik Apply → OK.
+
+--------------------------------------------------
+
+3. DHCP Client (Mengambil IP dari WiFi)
+- Masuk ke IP → DHCP Client.
+- Klik +.
+- Atur:
+  Interface : wlan1
+- Klik Apply → OK.
+
+Pastikan status DHCP Client adalah "bound".
+
+--------------------------------------------------
+
+4. Konfigurasi IP Address (Jaringan LAN)
+- Masuk ke IP → Addresses.
+- Klik +.
+- Contoh konfigurasi:
+  Address : 192.168.10.1/24  
+  Interface : ether2 (atau port LAN yang digunakan)
+- Klik Apply → OK.
+
+--------------------------------------------------
+
+5. Setup DHCP Server (Untuk Client)
+- Masuk ke IP → DHCP Server.
+- Klik DHCP Setup.
+- Pilih interface LAN (contoh: ether2).
+- Klik Next hingga proses selesai.
+
+--------------------------------------------------
+
+6. Konfigurasi NAT (Agar Client Bisa Internet)
+- Masuk ke IP → Firewall → NAT.
+- Klik +.
+
+Tab General:
+Chain : srcnat  
+Out Interface : wlan1  
+
+Tab Action:
+Action : masquerade  
+
+- Klik Apply → OK.
+
+--------------------------------------------------
+
+7. Tes Koneksi Internet
+Buka Terminal, lalu jalankan:
+
+ping 8.8.8.8
+
+Jika muncul reply, berarti koneksi internet sudah aktif.
+
+--------------------------------------------------
+
+8. Pengujian Akhir
+- Disconnect WiFi dari laptop/HP.
+- Sambungkan perangkat ke LAN atau WiFi MikroTik.
+- Tunggu beberapa detik hingga mendapat IP.
+- Coba akses internet.
+
+Jika bisa browsing, konfigurasi berhasil.
+
+--------------------------------------------------
+
+

@@ -1,0 +1,313 @@
+UKK GUIDE  
+NOTE: CentOS menggunakan bridge adapter agar bisa satu jaringan.
+
+==================================================
+
+CENTOS – INSTALL & AKTIFKAN SSH
+
+Install SSH server:
+sudo dnf install -y openssh-server
+
+Aktifkan service:
+sudo systemctl enable --now sshd
+
+Buka firewall untuk SSH:
+sudo firewall-cmd --permanent --add-service=ssh
+sudo firewall-cmd --reload
+
+--------------------------------------------------
+
+CEK JARINGAN CENTOS
+
+Cari nama interface dan IP:
+ip a
+ip r
+
+Tes koneksi internet:
+ping -c 3 8.8.8.8
+
+--------------------------------------------------
+
+AKSES SSH DARI POWERSHELL
+
+Login:
+ssh root@IP_ADDRESS
+
+Jika muncul error host key:
+ssh-keygen -R IP_ADDRESS
+# lalu coba SSH lagi
+
+==================================================
+
+AWS SETUP
+
+1. CREATE VPC
+- Masuk ke VPC → Create VPC
+- Name tag              : Project-Kyra
+- IPv4 CIDR            : gunakan /26
+- Number of private subnet : 0
+- VPC endpoints        : none
+- Klik Create VPC
+
+--------------------------------------------------
+
+2. CREATE SECURITY GROUP
+- Masuk ke Security Group → Create
+- Security group name  : Security-kyra
+- Description          : Security-kyra
+- VPC                  : project-kyra-vpc
+
+Inbound Rules:
+- Type   : MYSQL / Aurora
+- Source : Custom → buka https://whatismyipaddress.com lalu copy IP kamu
+
+Tags:
+- Key   : Name
+- Value : security-kyra
+
+Klik Create Security Group.
+
+--------------------------------------------------
+
+AURORA / RDS DATABASE
+
+Create Database:
+- Engine options       : MySQL
+- Templates            : Sandbox
+
+Settings:
+- DB instance          : database-kyra
+- Master username      : kyra
+- Master password      : isi sendiri
+
+Storage:
+- Allocated storage    : 25 GB
+- Disable "Enable storage autoscaling"
+
+Connectivity:
+- VPC                  : project-kyra-vpc
+- Public access        : Yes
+- Existing security group : security-kyra
+- Availability Zone    : us-east-1a
+
+Additional Config:
+- Initial database name : db_sekolah
+
+Backup:
+- Enable automated backup : Off
+
+Maintenance:
+- Auto minor version upgrade : Off
+
+Klik Create Database.
+
+Setelah database jadi:
+- Buka database → scroll ke bawah
+- Copy Endpoint (akan dipakai di TablePlus & config.php)
+
+==================================================
+
+TABLEPLUS SETUP
+
+- Klik tombol "+" kiri atas
+- Choose : MySQL → Create
+
+Isi:
+Name        : mysql-kyra  
+Host/IP     : paste endpoint RDS  
+Username    : kyra  
+Password    : password RDS  
+Database    : db_sekolah  
+
+Klik Connect.
+
+--------------------------------------------------
+
+BUAT TABLE
+
+Jalankan query berikut:
+
+CREATE TABLE siswa (
+ id INT(11) PRIMARY KEY AUTO_INCREMENT,
+ nama VARCHAR(255) NOT NULL,
+ nomor_presensi INT(11) NOT NULL,
+ kelas VARCHAR(100) NOT NULL,
+ foto_filename VARCHAR(255) NULL
+);
+
+Jika muncul "Query OK", berarti berhasil.
+
+Cek:
+- Masuk ke Items (kiri atas)
+- Search "siswa"
+
+==================================================
+
+CENTOS – KONFIGURASI SSH (PENTING)
+
+Edit config:
+sudo nano /etc/ssh/sshd_config
+
+Pastikan baris ini aktif (hapus tanda # jika ada):
+
+PermitRootLogin yes
+PasswordAuthentication yes
+PubkeyAuthentication yes
+
+Jika ada:
+PermitRootLogin prohibit-password  
+ubah menjadi:
+PermitRootLogin yes
+
+Restart SSH:
+sudo systemctl restart sshd
+
+--------------------------------------------------
+
+SETTING NETWORK VM
+
+Machine → Network:
+Attached to : Bridge Adapter  
+Name        : VirtualBox Adapter  
+
+Restart network:
+sudo systemctl restart NetworkManager
+
+Cek IP:
+ip a
+
+==================================================
+
+SSH TAMBAHAN (OPSIONAL)
+
+Cek status:
+systemctl status sshd
+systemctl enable --now sshd
+
+Login:
+ssh user@IP_SERVER
+
+Login pakai port lain:
+ssh -p 2222 root@IP_SERVER
+
+Generate key:
+ssh-keygen
+
+Copy key:
+ssh-copy-id user@IP_SERVER
+
+Jika error "Host key changed":
+ssh-keygen -R IP_SERVER
+
+==================================================
+
+UPDATE SYSTEM
+sudo dnf update -y
+
+==================================================
+
+DEPLOY PROJECT DI CENTOS (Apache + Git + PHP)
+
+Install package:
+sudo yum install -y git httpd php php-mysqlnd
+
+Masuk ke web root:
+cd /var/www/html
+
+Clone repo:
+git clone https://github.com/username/project.git
+# contoh:
+# sudo git clone https://github.com/skiiraw/UKK-studentapp.git
+
+Cek:
+ls
+
+Jika folder project bernama "studentapp":
+mv studentapp/* .
+rm -rf studentapp/
+
+Edit config:
+nano config.php
+
+==================================================
+
+ISI CONFIG.PHP
+
+<?php
+$db_host = 'ENDPOINT_RDS';
+$db_user = 'kyra';
+$db_pass = 'PASSWORD_RDS';
+$db_name = 'db_sekolah';
+
+$mysqli = new mysqli($db_host, $db_user, $db_pass, $db_name);
+
+if ($mysqli->connect_error) {
+    ini_set('display_errors', 1);
+    error_reporting(E_ALL);
+    die("Koneksi database gagal: " . $mysqli->connect_error);
+}
+?>
+
+==================================================
+
+SET PERMISSION APACHE
+
+Cek file:
+ls -l
+
+Set permission:
+sudo chmod -R 755 .
+sudo chown -R apache:apache .
+
+Aktifkan Apache:
+sudo systemctl enable httpd
+sudo systemctl start httpd
+
+--------------------------------------------------
+
+BUKA FIREWALL HTTP
+
+sudo firewall-cmd --permanent --add-port=80/tcp
+sudo firewall-cmd --reload
+sudo firewall-cmd --list-ports
+
+Izinkan Apache akses network:
+sudo setsebool -P httpd_can_network_connect 1
+
+Tes:
+curl http://localhost
+
+==================================================
+
+FOLDER UPLOAD
+
+mkdir uploads
+sudo chown -R apache:apache uploads/
+ls -l
+
+==================================================
+
+TEST WEBSITE
+
+Buka browser:
+http://IP_KAMU/index.php
+
+==================================================
+
+MIKROTIK DNS (OPSIONAL DOMAIN LOKAL)
+
+IP → DNS:
+- Centang Allow Remote Requests → Apply
+
+IP → DNS → Static:
+Name    : kyra.com  
+Address : IP_CENTOS  
+
+Apply → OK.
+
+Sekarang buka browser:
+http://kyra.com
+
+==================================================
+
+
