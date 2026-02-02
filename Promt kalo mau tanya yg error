@@ -1,0 +1,113 @@
+Aku sedang mengerjakan project UKK dengan arsitektur berikut:
+
+SETUP BESAR:
+- Internet → MikroTik → VM CentOS (bridge adapter)
+- CentOS menjalankan Apache + PHP
+- Database menggunakan AWS RDS MySQL
+- Aplikasi diambil dari GitHub dan dideploy ke /var/www/html
+- Domain lokal menggunakan DNS MikroTik (contoh: kyra.com)
+
+Tolong jelaskan dengan LANGKAH TERSTRUKTUR, MUDAH DIPAHAMI PEMULA, dan fokus ke SOLUSI jika ada error.
+
+==================================================
+
+TUJUAN AKHIR PROJECT:
+1. CentOS terhubung internet
+2. Bisa SSH ke server
+3. Database RDS bisa diakses
+4. Website bisa dibuka via IP/domain
+5. Aplikasi terhubung ke database tanpa error
+
+==================================================
+
+DETAIL ENVIRONMENT:
+
+MIKROTIK:
+- Digunakan sebagai gateway internet
+- NAT masquerade aktif
+- DHCP server untuk client
+- DNS allow remote requests aktif
+- Static DNS → domain diarahkan ke IP CentOS
+
+CENTOS (VM):
+- Network : Bridge Adapter
+- Service yang digunakan:
+  - openssh-server
+  - httpd (Apache)
+  - PHP
+  - php-mysqlnd
+  - git
+
+Firewall:
+- SSH (22) open
+- HTTP (80) open
+- SELinux mengizinkan Apache akses network
+
+==================================================
+
+AWS:
+- Menggunakan VPC custom
+- Security group hanya mengizinkan IP saya
+- Database: MySQL RDS
+- Public access: Yes
+- Port: 3306
+- Sudah punya:
+  - endpoint
+  - username
+  - password
+  - database name
+
+==================================================
+
+DEPLOYMENT FLOW:
+1. Install Apache, PHP, Git
+2. Clone repo ke /var/www/html
+3. Edit config.php → masukkan endpoint RDS
+4. Set permission ke apache
+5. Start httpd
+6. Test via browser
+
+==================================================
+
+JIKA AKU BERTANYA ERROR:
+Gunakan format jawaban seperti ini:
+
+1. Penyebab paling mungkin
+2. Cara cek
+3. Cara fix (step-by-step)
+4. Perintah terminal jika perlu
+5. Hal yang sering bikin gagal
+
+Jangan jelasin terlalu teoritis.
+Fokus ke praktik.
+
+==================================================
+
+CONTOH ERROR YANG MUNGKIN TERJADI:
+- Tidak bisa SSH
+- CentOS tidak dapat internet
+- Apache tidak jalan
+- Website tidak bisa diakses
+- Tidak bisa connect ke RDS
+- Firewall blokir koneksi
+- Permission error
+- SELinux problem
+- DNS MikroTik tidak resolve
+- NAT salah
+
+==================================================
+
+GAYA JAWABAN YANG AKU MAU:
+- Langsung ke inti
+- Step-by-step
+- Tidak bertele-tele
+- Cocok untuk pemula
+- Sertakan command jika perlu
+- Jelaskan bagian penting saja
+
+Kalau ada cara tercepat / best practice, utamakan itu.
+
+==================================================
+
+Pertanyaan saya:
+[TULIS MASALAH KAMU DI SINI]
